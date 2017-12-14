@@ -48,11 +48,11 @@ namespace WeatherBot
 
         public static string GetCity(string text)
         {
-            int idx = text.IndexOf("for");
+            int idx = text.IndexOf("for ");
             int len = 4;
-            if (idx == 0)
+            if (idx == -1)
             {
-                idx = text.IndexOf("in");
+                idx = text.IndexOf("in ");
                 if (idx > 0)
                 {
                     len = 3;
