@@ -3,6 +3,7 @@ using Microsoft.AspNetCore.Http;
 using Microsoft.AspNetCore.Mvc;
 using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Adapters;
+using Microsoft.Bot.Builder.Storage;
 using Microsoft.Bot.Connector;
 using Microsoft.Extensions.Configuration;
 
@@ -24,21 +25,31 @@ namespace WeatherBot.Controllers
                 // create the activity adapter to send/receive Activity objects 
                 activityAdapter = new BotFrameworkAdapter(appId, appPassword);
                 bot = new Bot(activityAdapter)
+                    .Use(new MemoryStorage())
+                    .Use(new BotStateManager()) // --- add Bot State Manager to automatically persist and load the context.State.Conversation and context.State.User objects
+                    .Use(new WeatherView())
                     .OnReceive(async (context) =>
                     {
                         // THIS IS YOUR BOT LOGIC
                         if (context.Request.Type == ActivityTypes.Message)
                         {
-                            string city = context.Request.Text;
+                            string text = context.Request.Text.ToLower();
+                            string city = Weather.GetCity(text);
                             if (!string.IsNullOrWhiteSpace(city))
                             {
-                                string weatherJson = await Weather.GetWeatherByCityName(city);
-                                context.Reply(weatherJson);
-                                //return new ReceiveResponse(true);
+                                if (text.Contains("forecast"))
+                                {
+                                    //context.Reply(await Weather.GetWeatherForecastByCityName(city));
+                                    context.ReplyWith(WeatherView.FORECAST, city);
+                                }
+                                else
+                                {
+                                    context.ReplyWith(WeatherView.CURRENT, city);
+                                }
                             }
                             else
                             {
-
+                                context.Reply("Please specify city");
                             }
                         }
                         else

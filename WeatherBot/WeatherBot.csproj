@@ -9,14 +9,17 @@
   </ItemGroup>
 
   <ItemGroup>
+    <PackageReference Include="Microsoft.AdaptiveCards" Version="0.5.1" />
     <PackageReference Include="Microsoft.AspNetCore.All" Version="2.0.3" />
     <PackageReference Include="Microsoft.Bot.Builder" Version="4.0.2-alpha" />
     <PackageReference Include="Microsoft.Bot.Builder.Ai" Version="4.0.2-alpha" />
     <PackageReference Include="Microsoft.Bot.Builder.Azure" Version="4.0.2-alpha" />
     <PackageReference Include="Microsoft.Bot.Builder.BotFramework" Version="4.0.2-alpha" />
     <PackageReference Include="Microsoft.Bot.Builder.Conversation" Version="4.0.2-alpha" />
+    <PackageReference Include="Microsoft.Bot.Connector" Version="3.12.2.4" />
     <PackageReference Include="Microsoft.Bot.Connector.AspNetCore" Version="2.0.0.3" />
     <PackageReference Include="Microsoft.VisualStudio.Web.CodeGeneration.Design" Version="2.0.1" />
+    <PackageReference Include="Newtonsoft.Json" Version="11.0.1-beta1" />
   </ItemGroup>
 
   <ItemGroup>
