@@ -6,6 +6,7 @@ using Microsoft.Bot.Builder.Adapters;
 using Microsoft.Bot.Builder.Storage;
 using Microsoft.Bot.Connector;
 using Microsoft.Extensions.Configuration;
+using System.Linq;
 
 namespace WeatherBot.Controllers
 {
@@ -39,12 +40,10 @@ namespace WeatherBot.Controllers
                             {
                                 if (text.Contains("current"))
                                 {
-                                    context.Reply(await Weather.GetCurrentWeatherByCityName(city));
                                     context.ReplyWith(WeatherView.CURRENT, city);
                                 }
                                 else
                                 {
-                                    context.Reply(await Weather.GetWeatherForecastByCityName(city));
                                     context.ReplyWith(WeatherView.FORECAST, city);
                                 }
                             }
@@ -55,7 +54,11 @@ namespace WeatherBot.Controllers
                         }
                         else
                         {
-                            context.Reply("Type city name to get weather");
+                            var activity = context.Request.AsConversationUpdateActivity();
+                            if (activity.MembersAdded.Where(m => m.Id == activity.Recipient.Id).Any())
+                            {
+                                context.Reply("Hello, type something like 'forecast for seattle'");
+                            }
                         }
                     });            
             }

@@ -6,18 +6,20 @@ namespace WeatherBot
 {
     public static class Weather
     {
-        const string WeatherApiBaseUrl = "http://api.openweathermap.org/data/2.5/{0}?q={1}&units=imperial&APPID=a0f75f6b2f7ce29295822d2862df66a6{2}";
-        const string CurrentWeather = "weather";
-        const string Forecast = "forecast/daily";
-        const string CityNameParam = "q";
-        const string NumForecastDaysParam = "&cnt=3";
+        const string CurrentConditionApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20item.condition%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22{0}%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
+        const string ForecastApiUrl = "https://query.yahooapis.com/v1/public/yql?q=select%20*%20from%20weather.forecast%20where%20woeid%20in%20(select%20woeid%20from%20geo.places(1)%20where%20text%3D%22{0}%22)&format=json&env=store%3A%2F%2Fdatatables.org%2Falltableswithkeys";
         
-        static HttpClient client = new HttpClient();
+        static string[] Cardinals = { "N", "NE", "E", "SE", "S", "SW", "W", "NW", "N" };
 
-        public static async Task<string> GetCurrentWeatherByCityName(string cityName)
+        public static string DegreesToCardinal(double degrees)
         {
-            HttpResponseMessage response = await client.GetAsync(
-                String.Format(WeatherApiBaseUrl, CurrentWeather, cityName, String.Empty));
+            return Cardinals[(int)Math.Round(((double)degrees % 360) / 45)];
+        }
+
+        public static async Task<string> GetCurrentWeatherByCityNameAsync(string cityName)
+        {
+            HttpClient httpClient = new HttpClient();
+            HttpResponseMessage response = await httpClient.GetAsync(String.Format(ForecastApiUrl, cityName));
             if (response.IsSuccessStatusCode)
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();
@@ -29,10 +31,10 @@ namespace WeatherBot
             }
         }
 
-        public static async Task<string> GetWeatherForecastByCityName(string cityName)
+        public static async Task<string> GetWeatherForecastByCityNameAsync(string cityName)
         {
-            HttpResponseMessage response = await client.GetAsync(
-                String.Format(WeatherApiBaseUrl, Forecast, cityName, NumForecastDaysParam));
+            HttpClient httpClient = new HttpClient();
+            HttpResponseMessage response = await httpClient.GetAsync(String.Format(ForecastApiUrl, cityName));
             if (response.IsSuccessStatusCode)
             {
                 string jsonResponse = await response.Content.ReadAsStringAsync();

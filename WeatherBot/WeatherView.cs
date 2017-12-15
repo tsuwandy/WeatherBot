@@ -5,6 +5,7 @@ using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Threading.Tasks;
 
 namespace WeatherBot
 {
@@ -19,7 +20,7 @@ namespace WeatherBot
             // Default templates
             ["default"] = new TemplateIdMap
                 {
-                    { CURRENT, (context, city) => GetWeatherCard(context, city, false) },
+                    { CURRENT, (context, city) =>  GetWeatherCard(context, city, false) },
                     { FORECAST, (context, city) => GetWeatherCard(context, city, true) },
                 }
         };
@@ -101,12 +102,6 @@ namespace WeatherBot
             ""text"": ""Rain shower"",
             ""type"": ""TextBlock"",
             ""weight"": ""bolder""
-        },
-        {
-            ""isSubtle"": true,
-            ""width"": ""small"",
-            ""text"": ""60% chance of rain"",
-            ""type"": ""TextBlock""
         },
         {
             ""isSubtle"": true,
@@ -336,11 +331,48 @@ namespace WeatherBot
         {
         }
 
+        public static string GetWeatherImage(bool useSmallImage, string weatherText)
+        {
+            Dictionary<string, string> lookup = useSmallImage ? SmallWeatherImages : LargeWeatherImages;
+            weatherText = weatherText.ToLowerInvariant();
+            if (weatherText.Contains("cloudy"))
+            {
+                return lookup["Cloudy"];
+            }
+            else if (weatherText.Contains("rain") || 
+                weatherText.Contains("showers") || 
+                weatherText.Contains("thunderstorms"))
+            {
+                return lookup["Rain"];
+            }
+            else if (weatherText.Contains("snow"))
+            {
+                return lookup["Snow"];
+            }
+            else
+            {
+                return lookup["Sunny"];
+            }
+        }
+
         public static IMessageActivity GetWeatherCard(BotContext context, string city, bool isForecast)
+        {
+            return Task.Run(() => GetWeatherCardAsync(context, city, isForecast)).Result;
+        }
+
+        public static async Task<IMessageActivity> GetWeatherCardAsync(BotContext context, string city, bool isForecast)
         {
             IMessageActivity activity = context.Request.CreateReply();
             AdaptiveCard card = JsonConvert.DeserializeObject<AdaptiveCard>(isForecast ? TemplateForecast : TemplateCurrent);
             DateTime now = DateTime.Now;
+            string weatherJson = await Weather.GetWeatherForecastByCityNameAsync(city);
+            dynamic weatherInfo = !String.IsNullOrWhiteSpace(weatherJson) ? JsonConvert.DeserializeObject<dynamic>(weatherJson) : null;
+
+            if (weatherInfo == null)
+            {
+                activity.Text = $"Could not get weather information for {city}";
+                return activity;
+            }
 
             // update header
             TextBlock dateHeader = (TextBlock)(((ColumnSet)card.Body[0]).Columns[0].Items[0]);
@@ -351,7 +383,30 @@ namespace WeatherBot
 
             // update updated time
             TextBlock updated = (TextBlock)card.Body[card.Body.Count - 1];
-            updated.Text = now.ToShortTimeString();
+            updated.Text = $"Updated {now.ToShortTimeString()}";
+
+            weatherInfo = weatherInfo.query.results.channel;
+            dynamic wind = weatherInfo.wind;
+            string cardinalDirection = Weather.DegreesToCardinal(double.Parse(wind.direction.ToString()));
+
+            // update wind
+            TextBlock windInfo = (TextBlock)card.Body[3];
+            windInfo.Text = $"Winds {wind.speed} mph {cardinalDirection}";
+
+            dynamic currentCondition = weatherInfo.item.condition;
+
+            // update weather condition text and image
+            TextBlock conditionSummary = (TextBlock)card.Body[2];
+            conditionSummary.Text = currentCondition.text;
+
+            Image currentWeatherImage = (Image)(((ColumnSet)card.Body[1]).Columns[0].Items[0]);
+            currentWeatherImage.Url = GetWeatherImage(false, currentCondition.text);
+
+            if (isForecast)
+            {
+                dynamic forecast = weatherInfo.item.forecast;
+            }
+
             activity.Attachments.Add(new Attachment(AdaptiveCard.ContentType, content: card));
             return activity;
         }
