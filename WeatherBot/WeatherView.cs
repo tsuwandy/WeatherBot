@@ -199,12 +199,6 @@ namespace WeatherBot
         {
             ""isSubtle"": true,
             ""width"": ""small"",
-            ""text"": ""60% chance of rain"",
-            ""type"": ""TextBlock""
-        },
-        {
-            ""isSubtle"": true,
-            ""width"": ""small"",
             ""text"": ""Winds 5 mph NE"",
             ""type"": ""TextBlock""
         },
@@ -377,10 +371,7 @@ namespace WeatherBot
             // update header
             TextBlock dateHeader = (TextBlock)(((ColumnSet)card.Body[0]).Columns[0].Items[0]);
             dateHeader.Text = now.ToString("ddd MMM dd");
-
-            TextBlock cityHeader = (TextBlock)(((ColumnSet)card.Body[0]).Columns[1].Items[0]);
-            cityHeader.Text = city;
-
+            
             // update updated time
             TextBlock updated = (TextBlock)card.Body[card.Body.Count - 1];
             updated.Text = $"Updated {now.ToShortTimeString()}";
@@ -388,6 +379,11 @@ namespace WeatherBot
             weatherInfo = weatherInfo.query.results.channel;
             dynamic wind = weatherInfo.wind;
             string cardinalDirection = Weather.DegreesToCardinal(double.Parse(wind.direction.ToString()));
+
+            // update city
+            TextBlock cityHeader = (TextBlock)(((ColumnSet)card.Body[0]).Columns[1].Items[0]);
+            dynamic location = weatherInfo.location;
+            cityHeader.Text = $"{location.city.ToString()}, {location.region.ToString()}";
 
             // update wind
             TextBlock windInfo = (TextBlock)card.Body[3];
@@ -400,11 +396,21 @@ namespace WeatherBot
             conditionSummary.Text = currentCondition.text;
 
             Image currentWeatherImage = (Image)(((ColumnSet)card.Body[1]).Columns[0].Items[0]);
-            currentWeatherImage.Url = GetWeatherImage(false, currentCondition.text);
+            currentWeatherImage.Url = GetWeatherImage(false, conditionSummary.Text);
 
+            
             if (isForecast)
             {
                 dynamic forecast = weatherInfo.item.forecast;
+                dynamic currentDay = forecast[0];
+
+                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[1].Items[0])).Text = currentDay.high;
+                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[2].Items[0])).Text = currentDay.low;
+            }
+            else
+            {
+                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[1].Items[0])).Text = currentCondition.temp;
+                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[2].Items[0])).Text = String.Empty;
             }
 
             activity.Attachments.Add(new Attachment(AdaptiveCard.ContentType, content: card));
