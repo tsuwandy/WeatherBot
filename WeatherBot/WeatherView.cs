@@ -404,17 +404,35 @@ namespace WeatherBot
                 dynamic forecast = weatherInfo.item.forecast;
                 dynamic currentDay = forecast[0];
 
-                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[1].Items[0])).Text = currentDay.high;
-                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[2].Items[0])).Text = currentDay.low;
+                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[1].Items[0])).Text = $"{currentDay.high.ToString()}°";
+                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[2].Items[0])).Text = $"{currentDay.low.ToString()}°";
+
+                UpdateForecast(forecast, ((ColumnSet)card.Body[4]).Columns);
             }
             else
             {
-                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[1].Items[0])).Text = currentCondition.temp;
+                ((TextBlock)(((ColumnSet)card.Body[1]).Columns[1].Items[0])).Text = $"{currentCondition.temp.ToString()}°";
                 ((TextBlock)(((ColumnSet)card.Body[1]).Columns[2].Items[0])).Text = String.Empty;
             }
 
             activity.Attachments.Add(new Attachment(AdaptiveCard.ContentType, content: card));
             return activity;
+        }
+
+        private static void UpdateForecast(dynamic forecast, List<Column> columns)
+        {
+            for (int i = 1; i < 4; ++i)
+            {
+                Column column = columns[i-1];
+                dynamic currentForecast = forecast[i];
+                string dayOfMonth = currentForecast.date.ToString();
+                dayOfMonth = dayOfMonth.Substring(0, dayOfMonth.IndexOf(' '));
+
+                ((TextBlock)column.Items[0]).Text = $"{currentForecast.day.ToString()} {dayOfMonth}";
+                ((Image)column.Items[1]).Url = GetWeatherImage(true, currentForecast.text.ToString());
+                ((TextBlock)column.Items[2]).Text = $"{currentForecast.high.ToString()}°";
+                ((TextBlock)column.Items[3]).Text = $"{currentForecast.low.ToString()}°";
+            }
         }
     }
 }

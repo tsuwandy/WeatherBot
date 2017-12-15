@@ -53,6 +53,7 @@ namespace WeatherBot
 
         public static string GetCity(string text)
         {
+            text = text.ToLowerInvariant();
             int idx = text.IndexOf("for ");
             int len = 4;
             if (idx == -1)
@@ -68,6 +69,10 @@ namespace WeatherBot
             {
                 string city = text.Substring(idx + len);
                 return Char.ToUpperInvariant(city[0]) + city.Substring(1);
+            }
+            else if (!text.Contains("forecast") || !text.Contains("current") || !text.Contains("weather") || !text.Contains("temperature"))
+            {
+                return text;
             }
 
             return String.Empty;
