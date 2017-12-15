@@ -6,20 +6,22 @@ namespace WeatherBot
 {
     public static class Weather
     {
-        const string WeatherApiBaseUrl = "http://api.openweathermap.org/data/2.5/{0}?{1}={2}&units=imperial&APPID=a0f75f6b2f7ce29295822d2862df66a6";
+        const string WeatherApiBaseUrl = "http://api.openweathermap.org/data/2.5/{0}?q={1}&units=imperial&APPID=a0f75f6b2f7ce29295822d2862df66a6{2}";
         const string CurrentWeather = "weather";
-        const string Forecast = "forecast";
+        const string Forecast = "forecast/daily";
         const string CityNameParam = "q";
-
+        const string NumForecastDaysParam = "&cnt=3";
+        
         static HttpClient client = new HttpClient();
 
         public static async Task<string> GetCurrentWeatherByCityName(string cityName)
         {
             HttpResponseMessage response = await client.GetAsync(
-                String.Format(WeatherApiBaseUrl, CurrentWeather, CityNameParam, cityName));
+                String.Format(WeatherApiBaseUrl, CurrentWeather, cityName, String.Empty));
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadAsStringAsync();
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+                return jsonResponse;
             }
             else
             {
@@ -30,10 +32,11 @@ namespace WeatherBot
         public static async Task<string> GetWeatherForecastByCityName(string cityName)
         {
             HttpResponseMessage response = await client.GetAsync(
-                String.Format(WeatherApiBaseUrl, Forecast, CityNameParam, cityName));
+                String.Format(WeatherApiBaseUrl, Forecast, cityName, NumForecastDaysParam));
             if (response.IsSuccessStatusCode)
             {
-                return await response.Content.ReadAsStringAsync();
+                string jsonResponse = await response.Content.ReadAsStringAsync();
+                return jsonResponse;
             }
             else
             {
@@ -61,7 +64,8 @@ namespace WeatherBot
 
             if (idx > 0)
             {
-                return text.Substring(idx + len);
+                string city = text.Substring(idx + len);
+                return Char.ToUpperInvariant(city[0]) + city.Substring(1);
             }
 
             return String.Empty;

@@ -37,14 +37,15 @@ namespace WeatherBot.Controllers
                             string city = Weather.GetCity(text);
                             if (!string.IsNullOrWhiteSpace(city))
                             {
-                                if (text.Contains("forecast"))
+                                if (text.Contains("current"))
                                 {
-                                    //context.Reply(await Weather.GetWeatherForecastByCityName(city));
-                                    context.ReplyWith(WeatherView.FORECAST, city);
+                                    context.Reply(await Weather.GetCurrentWeatherByCityName(city));
+                                    context.ReplyWith(WeatherView.CURRENT, city);
                                 }
                                 else
                                 {
-                                    context.ReplyWith(WeatherView.CURRENT, city);
+                                    context.Reply(await Weather.GetWeatherForecastByCityName(city));
+                                    context.ReplyWith(WeatherView.FORECAST, city);
                                 }
                             }
                             else

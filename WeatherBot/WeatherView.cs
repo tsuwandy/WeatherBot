@@ -3,6 +3,8 @@ using Microsoft.Bot.Builder;
 using Microsoft.Bot.Builder.Templates;
 using Microsoft.Bot.Connector;
 using Newtonsoft.Json;
+using System;
+using System.Collections.Generic;
 
 namespace WeatherBot
 {
@@ -311,6 +313,25 @@ namespace WeatherBot
         }
     ]
 }";
+
+        static readonly Dictionary<string, string> LargeWeatherImages = new Dictionary<string, string>()
+        {
+            { "Cloudy", "https://raw.githubusercontent.com/tsuwandy/weather/master/Weather-Cloudy.png" },
+            { "CloudyWithRain", "https://raw.githubusercontent.com/tsuwandy/weather/master/Weather-Cloudy_w_Rain.png" },
+            { "Rain", "https://raw.githubusercontent.com/tsuwandy/weather/master/Weather-Rain.png" },
+            { "Sunny", "https://raw.githubusercontent.com/tsuwandy/weather/master/Weather-Sunny.png" },
+            { "Snow", "https://raw.githubusercontent.com/tsuwandy/weather/master/Weather-Snow.png" }
+        };
+
+        static readonly Dictionary<string, string> SmallWeatherImages = new Dictionary<string, string>()
+        {
+            { "Cloudy", "https://raw.githubusercontent.com/tsuwandy/weather/master/cloudy.png" },
+            { "CloudyWithRain", "https://raw.githubusercontent.com/tsuwandy/weather/master/cloudy_w_rain.png" },
+            { "Rain", "https://raw.githubusercontent.com/tsuwandy/weather/master/rain_color.png" },
+            { "Sunny", "https://raw.githubusercontent.com/tsuwandy/weather/master/sunny.png" },
+            { "Snow", "https://raw.githubusercontent.com/tsuwandy/weather/master/snow_color.png" }
+        };
+
         public WeatherView() : base(new DictionaryRenderer(Templates))
         {
         }
@@ -319,6 +340,18 @@ namespace WeatherBot
         {
             IMessageActivity activity = context.Request.CreateReply();
             AdaptiveCard card = JsonConvert.DeserializeObject<AdaptiveCard>(isForecast ? TemplateForecast : TemplateCurrent);
+            DateTime now = DateTime.Now;
+
+            // update header
+            TextBlock dateHeader = (TextBlock)(((ColumnSet)card.Body[0]).Columns[0].Items[0]);
+            dateHeader.Text = now.ToString("ddd MMM dd");
+
+            TextBlock cityHeader = (TextBlock)(((ColumnSet)card.Body[0]).Columns[1].Items[0]);
+            cityHeader.Text = city;
+
+            // update updated time
+            TextBlock updated = (TextBlock)card.Body[card.Body.Count - 1];
+            updated.Text = now.ToShortTimeString();
             activity.Attachments.Add(new Attachment(AdaptiveCard.ContentType, content: card));
             return activity;
         }
